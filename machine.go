@@ -54,27 +54,27 @@ func (f Flag) Get(o Flag) string {
 }
 
 // Machine information.
-type Machine struct {
-	Name       string
-	UUID       string
-	State      MachineState
-	CPUs       uint
-	Memory     uint // main memory (in MB)
-	VRAM       uint // video memory (in MB)
-	CfgFile    string
-	BaseFolder string
-	OSType     string
-	Flag       Flag
-	BootOrder  []string // max 4 slots, each in {none|floppy|dvd|disk|net}
+type machine struct {
+	name       string
+	uUID       string
+	state      MachineState
+	cPUs       uint
+	memory     uint // main memory (in MB)
+	vRAM       uint // video memory (in MB)
+	cfgFile    string
+	baseFolder string
+	oSType     string
+	flag       Flag
+	bootOrder  []string // max 4 slots, each in {none|floppy|dvd|disk|net}
 }
 
 // Refresh reloads the machine information.
-func (m *Machine) Refresh() error {
-	id := m.Name
+func (m *machine) Refresh() error {
+	id := m.name
 	if id == "" {
-		id = m.UUID
+		id = m.uUID
 	}
-	mm, err := GetMachine(id)
+	mm, err := getMachine(id)
 	if err != nil {
 		return err
 	}
@@ -83,19 +83,19 @@ func (m *Machine) Refresh() error {
 }
 
 // Start starts the machine.
-func (m *Machine) Start() error {
-	switch m.State {
+func (m *machine) Start() error {
+	switch m.state {
 	case Paused:
-		return vbm("controlvm", m.Name, "resume")
+		return vbm("controlvm", m.name, "resume")
 	case Poweroff, Saved, Aborted:
-		return vbm("startvm", m.Name, "--type", "headless")
+		return vbm("startvm", m.name, "--type", "headless")
 	}
 	return nil
 }
 
 // Suspend suspends the machine and saves its state to disk.
-func (m *Machine) Save() error {
-	switch m.State {
+func (m *machine) Save() error {
+	switch m.state {
 	case Paused:
 		if err := m.Start(); err != nil {
 			return err
@@ -103,21 +103,21 @@ func (m *Machine) Save() error {
 	case Poweroff, Aborted, Saved:
 		return nil
 	}
-	return vbm("controlvm", m.Name, "savestate")
+	return vbm("controlvm", m.name, "savestate")
 }
 
 // Pause pauses the execution of the machine.
-func (m *Machine) Pause() error {
-	switch m.State {
+func (m *machine) Pause() error {
+	switch m.state {
 	case Paused, Poweroff, Aborted, Saved:
 		return nil
 	}
-	return vbm("controlvm", m.Name, "pause")
+	return vbm("controlvm", m.name, "pause")
 }
 
 // Stop gracefully stops the machine.
-func (m *Machine) Stop() error {
-	switch m.State {
+func (m *machine) Stop() error {
+	switch m.state {
 	case Poweroff, Aborted, Saved:
 		return nil
 	case Paused:
@@ -126,8 +126,8 @@ func (m *Machine) Stop() error {
 		}
 	}
 
-	for m.State != Poweroff { // busy wait until the machine is stopped
-		if err := vbm("controlvm", m.Name, "acpipowerbutton"); err != nil {
+	for m.state != Poweroff { // busy wait until the machine is stopped
+		if err := vbm("controlvm", m.name, "acpipowerbutton"); err != nil {
 			return err
 		}
 		time.Sleep(1 * time.Second)
@@ -139,17 +139,17 @@ func (m *Machine) Stop() error {
 }
 
 // Poweroff forcefully stops the machine. State is lost and might corrupt the disk image.
-func (m *Machine) Poweroff() error {
-	switch m.State {
+func (m *machine) Poweroff() error {
+	switch m.state {
 	case Poweroff, Aborted, Saved:
 		return nil
 	}
-	return vbm("controlvm", m.Name, "poweroff")
+	return vbm("controlvm", m.name, "poweroff")
 }
 
 // Restart gracefully restarts the machine.
-func (m *Machine) Restart() error {
-	switch m.State {
+func (m *machine) Restart() error {
+	switch m.state {
 	case Paused, Saved:
 		if err := m.Start(); err != nil {
 			return err
@@ -162,26 +162,26 @@ func (m *Machine) Restart() error {
 }
 
 // Reset forcefully restarts the machine. State is lost and might corrupt the disk image.
-func (m *Machine) Reset() error {
-	switch m.State {
+func (m *machine) Reset() error {
+	switch m.state {
 	case Paused, Saved:
 		if err := m.Start(); err != nil {
 			return err
 		}
 	}
-	return vbm("controlvm", m.Name, "reset")
+	return vbm("controlvm", m.name, "reset")
 }
 
 // Delete deletes the machine and associated disk images.
-func (m *Machine) Delete() error {
+func (m *machine) Delete() error {
 	if err := m.Poweroff(); err != nil {
 		return err
 	}
-	return vbm("unregistervm", m.Name, "--delete")
+	return vbm("unregistervm", m.name, "--delete")
 }
 
 // GetMachine finds a machine by its name or UUID.
-func GetMachine(id string) (*Machine, error) {
+func getMachine(id string) (*machine, error) {
 	stdout, stderr, err := vbmOutErr("showvminfo", id, "--machinereadable")
 	if err != nil {
 		if reMachineNotFound.FindString(stderr) != "" {
@@ -190,7 +190,7 @@ func GetMachine(id string) (*Machine, error) {
 		return nil, err
 	}
 	s := bufio.NewScanner(strings.NewReader(stdout))
-	m := &Machine{}
+	m := &machine{}
 	for s.Scan() {
 		res := reVMInfoLine.FindStringSubmatch(s.Text())
 		if res == nil {
@@ -207,32 +207,32 @@ func GetMachine(id string) (*Machine, error) {
 
 		switch key {
 		case "name":
-			m.Name = val
+			m.name = val
 		case "UUID":
-			m.UUID = val
+			m.uUID = val
 		case "VMState":
-			m.State = MachineState(val)
+			m.state = MachineState(val)
 		case "memory":
 			n, err := strconv.ParseUint(val, 10, 32)
 			if err != nil {
 				return nil, err
 			}
-			m.Memory = uint(n)
+			m.memory = uint(n)
 		case "cpus":
 			n, err := strconv.ParseUint(val, 10, 32)
 			if err != nil {
 				return nil, err
 			}
-			m.CPUs = uint(n)
+			m.cPUs = uint(n)
 		case "vram":
 			n, err := strconv.ParseUint(val, 10, 32)
 			if err != nil {
 				return nil, err
 			}
-			m.VRAM = uint(n)
+			m.vRAM = uint(n)
 		case "CfgFile":
-			m.CfgFile = val
-			m.BaseFolder = filepath.Dir(val)
+			m.cfgFile = val
+			m.baseFolder = filepath.Dir(val)
 		}
 	}
 	if err := s.Err(); err != nil {
@@ -242,19 +242,19 @@ func GetMachine(id string) (*Machine, error) {
 }
 
 // ListMachines lists all registered machines.
-func ListMachines() ([]*Machine, error) {
+func listMachines() ([]*machine, error) {
 	out, err := vbmOut("list", "vms")
 	if err != nil {
 		return nil, err
 	}
-	ms := []*Machine{}
+	ms := []*machine{}
 	s := bufio.NewScanner(strings.NewReader(out))
 	for s.Scan() {
 		res := reVMNameUUID.FindStringSubmatch(s.Text())
 		if res == nil {
 			continue
 		}
-		m, err := GetMachine(res[1])
+		m, err := getMachine(res[1])
 		if err != nil {
 			return nil, err
 		}
@@ -267,18 +267,18 @@ func ListMachines() ([]*Machine, error) {
 }
 
 // CreateMachine creates a new machine. If basefolder is empty, use default.
-func CreateMachine(name, basefolder string) (*Machine, error) {
+func createMachine(name, basefolder string) (*machine, error) {
 	if name == "" {
 		return nil, fmt.Errorf("machine name is empty")
 	}
 
 	// Check if a machine with the given name already exists.
-	ms, err := ListMachines()
+	ms, err := listMachines()
 	if err != nil {
 		return nil, err
 	}
 	for _, m := range ms {
-		if m.Name == name {
+		if m.name == name {
 			return nil, ErrMachineExist
 		}
 	}
@@ -292,7 +292,7 @@ func CreateMachine(name, basefolder string) (*Machine, error) {
 		return nil, err
 	}
 
-	m, err := GetMachine(name)
+	m, err := getMachine(name)
 	if err != nil {
 		return nil, err
 	}
@@ -301,37 +301,37 @@ func CreateMachine(name, basefolder string) (*Machine, error) {
 }
 
 // Modify changes the settings of the machine.
-func (m *Machine) Modify() error {
-	args := []string{"modifyvm", m.Name,
+func (m *machine) Modify() error {
+	args := []string{"modifyvm", m.name,
 		"--firmware", "bios",
 		"--bioslogofadein", "off",
 		"--bioslogofadeout", "off",
 		"--bioslogodisplaytime", "0",
 		"--biosbootmenu", "disabled",
 
-		"--ostype", m.OSType,
-		"--cpus", fmt.Sprintf("%d", m.CPUs),
-		"--memory", fmt.Sprintf("%d", m.Memory),
-		"--vram", fmt.Sprintf("%d", m.VRAM),
+		"--ostype", m.oSType,
+		"--cpus", fmt.Sprintf("%d", m.cPUs),
+		"--memory", fmt.Sprintf("%d", m.memory),
+		"--vram", fmt.Sprintf("%d", m.vRAM),
 
-		"--acpi", m.Flag.Get(F_acpi),
-		"--ioapic", m.Flag.Get(F_ioapic),
-		"--rtcuseutc", m.Flag.Get(F_rtcuseutc),
-		"--cpuhotplug", m.Flag.Get(F_cpuhotplug),
-		"--pae", m.Flag.Get(F_pae),
-		"--longmode", m.Flag.Get(F_longmode),
-		"--synthcpu", m.Flag.Get(F_synthcpu),
-		"--hpet", m.Flag.Get(F_hpet),
-		"--hwvirtex", m.Flag.Get(F_hwvirtex),
-		"--triplefaultreset", m.Flag.Get(F_triplefaultreset),
-		"--nestedpaging", m.Flag.Get(F_nestedpaging),
-		"--largepages", m.Flag.Get(F_largepages),
-		"--vtxvpid", m.Flag.Get(F_vtxvpid),
-		"--vtxux", m.Flag.Get(F_vtxux),
-		"--accelerate3d", m.Flag.Get(F_accelerate3d),
+		"--acpi", m.flag.Get(F_acpi),
+		"--ioapic", m.flag.Get(F_ioapic),
+		"--rtcuseutc", m.flag.Get(F_rtcuseutc),
+		"--cpuhotplug", m.flag.Get(F_cpuhotplug),
+		"--pae", m.flag.Get(F_pae),
+		"--longmode", m.flag.Get(F_longmode),
+		"--synthcpu", m.flag.Get(F_synthcpu),
+		"--hpet", m.flag.Get(F_hpet),
+		"--hwvirtex", m.flag.Get(F_hwvirtex),
+		"--triplefaultreset", m.flag.Get(F_triplefaultreset),
+		"--nestedpaging", m.flag.Get(F_nestedpaging),
+		"--largepages", m.flag.Get(F_largepages),
+		"--vtxvpid", m.flag.Get(F_vtxvpid),
+		"--vtxux", m.flag.Get(F_vtxux),
+		"--accelerate3d", m.flag.Get(F_accelerate3d),
 	}
 
-	for i, dev := range m.BootOrder {
+	for i, dev := range m.bootOrder {
 		if i > 3 {
 			break // Only four slots `--boot{1,2,3,4}`. Ignore the rest.
 		}
@@ -344,19 +344,19 @@ func (m *Machine) Modify() error {
 }
 
 // AddNATPF adds a NAT port forarding rule to the n-th NIC with the given name.
-func (m *Machine) AddNATPF(n int, name string, rule PFRule) error {
-	return vbm("controlvm", m.Name, fmt.Sprintf("natpf%d", n),
+func (m *machine) AddNATPF(n int, name string, rule PFRule) error {
+	return vbm("controlvm", m.name, fmt.Sprintf("natpf%d", n),
 		fmt.Sprintf("%s,%s", name, rule.Format()))
 }
 
 // DelNATPF deletes the NAT port forwarding rule with the given name from the n-th NIC.
-func (m *Machine) DelNATPF(n int, name string) error {
-	return vbm("controlvm", m.Name, fmt.Sprintf("natpf%d", n), "delete", name)
+func (m *machine) DelNATPF(n int, name string) error {
+	return vbm("controlvm", m.name, fmt.Sprintf("natpf%d", n), "delete", name)
 }
 
 // SetNIC set the n-th NIC.
-func (m *Machine) SetNIC(n int, nic NIC) error {
-	args := []string{"modifyvm", m.Name,
+func (m *machine) SetNIC(n int, nic NIC) error {
+	args := []string{"modifyvm", m.name,
 		fmt.Sprintf("--nic%d", n), string(nic.Network),
 		fmt.Sprintf("--nictype%d", n), string(nic.Hardware),
 		fmt.Sprintf("--cableconnected%d", n), "on",
@@ -369,8 +369,8 @@ func (m *Machine) SetNIC(n int, nic NIC) error {
 }
 
 // AddStorageCtl adds a storage controller with the given name.
-func (m *Machine) AddStorageCtl(name string, ctl StorageController) error {
-	args := []string{"storagectl", m.Name, "--name", name}
+func (m *machine) AddStorageCtl(name string, ctl StorageController) error {
+	args := []string{"storagectl", m.name, "--name", name}
 	if ctl.SysBus != "" {
 		args = append(args, "--add", string(ctl.SysBus))
 	}
@@ -386,16 +386,105 @@ func (m *Machine) AddStorageCtl(name string, ctl StorageController) error {
 }
 
 // DelStorageCtl deletes the storage controller with the given name.
-func (m *Machine) DelStorageCtl(name string) error {
-	return vbm("storagectl", m.Name, "--name", name, "--remove")
+func (m *machine) DelStorageCtl(name string) error {
+	return vbm("storagectl", m.name, "--name", name, "--remove")
 }
 
 // AttachStorage attaches a storage medium to the named storage controller.
-func (m *Machine) AttachStorage(ctlName string, medium StorageMedium) error {
-	return vbm("storageattach", m.Name, "--storagectl", ctlName,
+func (m *machine) AttachStorage(ctlName string, medium StorageMedium) error {
+	return vbm("storageattach", m.name, "--storagectl", ctlName,
 		"--port", fmt.Sprintf("%d", medium.Port),
 		"--device", fmt.Sprintf("%d", medium.Device),
 		"--type", string(medium.DriveType),
 		"--medium", medium.Medium,
 	)
+}
+
+func (m *machine) Name() string {
+	return m.name
+}
+
+func (m *machine) UUID() string {
+	return m.uUID
+}
+
+func (m *machine) State() MachineState {
+	return m.state
+}
+
+func (m *machine) CPUs() uint {
+	return m.cPUs
+}
+
+func (m *machine) Memory() uint {
+	return m.memory
+}
+
+func (m *machine) VRAM() uint {
+	return m.vRAM
+}
+
+func (m *machine) CfgFile() string {
+	return m.cfgFile
+}
+
+func (m *machine) BaseFolder() string {
+	return m.baseFolder
+}
+
+func (m *machine) OSType() string {
+	return m.oSType
+}
+
+func (m *machine) Flag() Flag {
+	return m.flag
+}
+
+func (m *machine) BootOrder() []string {
+	return m.bootOrder
+}
+
+func (m *machine) SetName(name string) {
+	m.name = name
+}
+
+func (m *machine) SetUUID(uuid string) {
+	// TODO add validation
+	m.uUID = uuid
+}
+
+func (m *machine) SetState(state MachineState) {
+	m.state = state
+}
+
+func (m *machine) SetCPUs(cpus uint) {
+	m.cPUs = cpus
+}
+
+func (m *machine) SetMemory(memory uint) {
+	m.memory = memory
+}
+
+func (m *machine) SetVRAM(vram uint) {
+	m.vRAM = vram
+}
+
+func (m *machine) SetCfgFile(cfgFile string) {
+	m.cfgFile = cfgFile
+}
+
+func (m *machine) SetBaseFolder(baseFolder string) {
+	m.baseFolder = baseFolder
+}
+
+func (m *machine) SetOSType(osType string) {
+	m.oSType = osType
+}
+
+func (m *machine) SetFlag(flag Flag) {
+	m.flag = flag
+}
+
+func (m *machine) SetBootOrder(bootOrder []string) {
+	m.bootOrder = bootOrder
 }
