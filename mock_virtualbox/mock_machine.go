@@ -6,7 +6,7 @@ import (
 )
 
 // Machine information.
-type testMockMachine struct {
+type MockMachine struct {
 	name       string
 	uUID       string
 	state      virtualbox.MachineState
@@ -20,69 +20,69 @@ type testMockMachine struct {
 	bootOrder  []string // max 4 slots, each in {none|floppy|dvd|disk|net}
 }
 
-func (m *testMockMachine) Refresh() error {
+func (m *MockMachine) Refresh() error {
 	return nil
 }
 
-func (m *testMockMachine) Start() error {
+func (m *MockMachine) Start() error {
 	m.state = virtualbox.Running
 	return nil
 }
 
-func (m *testMockMachine) Save() error {
+func (m *MockMachine) Save() error {
 	m.state = virtualbox.Saved
 	return nil
 }
 
-func (m *testMockMachine) Pause() error {
+func (m *MockMachine) Pause() error {
 	m.state = virtualbox.Paused
 	return nil
 }
 
 // Stop gracefully stops the machine.
-func (m *testMockMachine) Stop() error {
+func (m *MockMachine) Stop() error {
 	m.state = virtualbox.Poweroff
 	return nil
 }
 
 // Poweroff forcefully stops the machine. State is lost and might corrupt the disk image.
-func (m *testMockMachine) Poweroff() error {
+func (m *MockMachine) Poweroff() error {
 	m.state = virtualbox.Poweroff
 	return nil
 }
 
 // Restart gracefully restarts the machine.
-func (m *testMockMachine) Restart() error {
+func (m *MockMachine) Restart() error {
 	return m.Start()
 }
 
 // Reset forcefully restarts the machine. State is lost and might corrupt the disk image.
-func (m *testMockMachine) Reset() error {
+func (m *MockMachine) Reset() error {
 	return m.Start()
 }
 
 // Delete deletes the machine and associated disk images.
-func (m *testMockMachine) Delete() error {
-	x := testMockMachine{}
+func (m *MockMachine) Delete() error {
+	x := MockMachine{}
 	m = &x
 	return nil
 }
 
 // GetMachine finds a machine by its name or UUID.
-func GetMachine(id string) (*testMockMachine, error) {
+func GetMachine(id string) (*MockMachine, error) {
 	// TODO find a better way to do this
-	m := testMockMachine{name: id}
+	m := MockMachine{name: id}
 	return &m, nil
 }
 
 // ListMachines lists all registered machines.
-func ListMachines() ([]*testMockMachine, error) {
+func ListMachines() ([]*MockMachine, error) {
 	return ms, nil
 }
 
 // CreateMachine creates a new machine. If basefolder is empty, use default.
-func CreateMachine(name, basefolder string) (*testMockMachine, error) {
-	var m testMockMachine
+func CreateMachine(name, basefolder string) (*MockMachine, error) {
+	var m MockMachine
 	if name == "" {
 		m.name == "default"
 	}
@@ -100,125 +100,125 @@ func CreateMachine(name, basefolder string) (*testMockMachine, error) {
 }
 
 // Modify changes the settings of the machine.
-func (m *testMockMachine) Modify() error {
+func (m *MockMachine) Modify() error {
 	return m.Refresh()
 }
 
 // AddNATPF adds a NAT port forarding rule to the n-th NIC with the given name.
-func (m *testMockMachine) AddNATPF(n int, name string, rule virtualbox.PFRule) error {
+func (m *MockMachine) AddNATPF(n int, name string, rule virtualbox.PFRule) error {
 	return nil
 }
 
 // DelNATPF deletes the NAT port forwarding rule with the given name from the n-th NIC.
-func (m *testMockMachine) DelNATPF(n int, name string) error {
+func (m *MockMachine) DelNATPF(n int, name string) error {
 	return nil
 }
 
 // SetNIC set the n-th NIC.
-func (m *testMockMachine) SetNIC(n int, nic virtualbox.NIC) error {
+func (m *MockMachine) SetNIC(n int, nic virtualbox.NIC) error {
 	return nil
 }
 
 // AddStorageCtl adds a storage controller with the given name.
-func (m *testMockMachine) AddStorageCtl(name string, ctl virtualbox.StorageController) error {
+func (m *MockMachine) AddStorageCtl(name string, ctl virtualbox.StorageController) error {
 	return nil
 }
 
 // DelStorageCtl deletes the storage controller with the given name.
-func (m *testMockMachine) DelStorageCtl(name string) error {
+func (m *MockMachine) DelStorageCtl(name string) error {
 	return nil
 }
 
 // AttachStorage attaches a storage medium to the named storage controller.
-func (m *testMockMachine) AttachStorage(ctlName string, medium virtualbox.StorageMedium) error {
+func (m *MockMachine) AttachStorage(ctlName string, medium virtualbox.StorageMedium) error {
 	return nil
 }
 
-func (m *testMockMachine) Name() string {
+func (m *MockMachine) Name() string {
 	return m.name
 }
 
-func (m *testMockMachine) UUID() string {
+func (m *MockMachine) UUID() string {
 	return m.uUID
 }
 
-func (m *testMockMachine) State() virtualbox.MachineState {
+func (m *MockMachine) State() virtualbox.MachineState {
 	return m.state
 }
 
-func (m *testMockMachine) CPUs() uint {
+func (m *MockMachine) CPUs() uint {
 	return m.cPUs
 }
 
-func (m *testMockMachine) Memory() uint {
+func (m *MockMachine) Memory() uint {
 	return m.memory
 }
 
-func (m *testMockMachine) VRAM() uint {
+func (m *MockMachine) VRAM() uint {
 	return m.vRAM
 }
 
-func (m *testMockMachine) CfgFile() string {
+func (m *MockMachine) CfgFile() string {
 	return m.cfgFile
 }
 
-func (m *testMockMachine) BaseFolder() string {
+func (m *MockMachine) BaseFolder() string {
 	return m.baseFolder
 }
 
-func (m *testMockMachine) OSType() string {
+func (m *MockMachine) OSType() string {
 	return m.oSType
 }
 
-func (m *testMockMachine) Flag() virtualbox.Flag {
+func (m *MockMachine) Flag() virtualbox.Flag {
 	return m.flag
 }
 
-func (m *testMockMachine) BootOrder() []string {
+func (m *MockMachine) BootOrder() []string {
 	return m.bootOrder
 }
 
-func (m *testMockMachine) SetName(name string) {
+func (m *MockMachine) SetName(name string) {
 	m.name = name
 }
 
-func (m *testMockMachine) SetUUID(uuid string) {
+func (m *MockMachine) SetUUID(uuid string) {
 	// TODO add validation
 	m.uUID = uuid
 }
 
-func (m *testMockMachine) SetState(state virtualbox.MachineState) {
+func (m *MockMachine) SetState(state virtualbox.MachineState) {
 	m.state = state
 }
 
-func (m *testMockMachine) SetCPUs(cpus uint) {
+func (m *MockMachine) SetCPUs(cpus uint) {
 	m.cPUs = cpus
 }
 
-func (m *testMockMachine) SetMemory(memory uint) {
+func (m *MockMachine) SetMemory(memory uint) {
 	m.memory = memory
 }
 
-func (m *testMockMachine) SetVRAM(vram uint) {
+func (m *MockMachine) SetVRAM(vram uint) {
 	m.vRAM = vram
 }
 
-func (m *testMockMachine) SetCfgFile(cfgFile string) {
+func (m *MockMachine) SetCfgFile(cfgFile string) {
 	m.cfgFile = cfgFile
 }
 
-func (m *testMockMachine) SetBaseFolder(baseFolder string) {
+func (m *MockMachine) SetBaseFolder(baseFolder string) {
 	m.baseFolder = baseFolder
 }
 
-func (m *testMockMachine) SetOSType(osType string) {
+func (m *MockMachine) SetOSType(osType string) {
 	m.oSType = osType
 }
 
-func (m *testMockMachine) SetFlag(flag virtualbox.Flag) {
+func (m *MockMachine) SetFlag(flag virtualbox.Flag) {
 	m.flag = flag
 }
 
-func (m *testMockMachine) SetBootOrder(bootOrder []string) {
+func (m *MockMachine) SetBootOrder(bootOrder []string) {
 	m.bootOrder = bootOrder
 }
