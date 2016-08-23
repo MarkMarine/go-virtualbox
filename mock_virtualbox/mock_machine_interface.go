@@ -5,6 +5,7 @@ package mock_virtualbox
 
 import (
 	gomock "github.com/golang/mock/gomock"
+	"github.com/markmarine/go-virtualbox"
 )
 
 // Mock of Machine interface
@@ -128,7 +129,7 @@ func (_mr *_MockMachineRecorder) Modify() *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Modify")
 }
 
-func (_m *MockMachine) AddNATPF(n int, name string, rule PFRule) error {
+func (_m *MockMachine) AddNATPF(n int, name string, rule virtualbox.PFRule) error {
 	ret := _m.ctrl.Call(_m, "AddNATPF", n, name, rule)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -148,7 +149,7 @@ func (_mr *_MockMachineRecorder) DelNATPF(arg0, arg1 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "DelNATPF", arg0, arg1)
 }
 
-func (_m *MockMachine) SetNIC(n int, nic NIC) error {
+func (_m *MockMachine) SetNIC(n int, nic virtualbox.NIC) error {
 	ret := _m.ctrl.Call(_m, "SetNIC", n, nic)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -158,7 +159,7 @@ func (_mr *_MockMachineRecorder) SetNIC(arg0, arg1 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "SetNIC", arg0, arg1)
 }
 
-func (_m *MockMachine) AddStorageCtl(name string, ctl StorageController) error {
+func (_m *MockMachine) AddStorageCtl(name string, ctl virtualbox.StorageController) error {
 	ret := _m.ctrl.Call(_m, "AddStorageCtl", name, ctl)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -178,7 +179,7 @@ func (_mr *_MockMachineRecorder) DelStorageCtl(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "DelStorageCtl", arg0)
 }
 
-func (_m *MockMachine) AttachStorage(ctlName string, medium StorageMedium) error {
+func (_m *MockMachine) AttachStorage(ctlName string, medium virtualbox.StorageMedium) error {
 	ret := _m.ctrl.Call(_m, "AttachStorage", ctlName, medium)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -208,9 +209,9 @@ func (_mr *_MockMachineRecorder) UUID() *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "UUID")
 }
 
-func (_m *MockMachine) State() MachineState {
+func (_m *MockMachine) State() virtualbox.MachineState {
 	ret := _m.ctrl.Call(_m, "State")
-	ret0, _ := ret[0].(MachineState)
+	ret0, _ := ret[0].(virtualbox.MachineState)
 	return ret0
 }
 
@@ -278,9 +279,9 @@ func (_mr *_MockMachineRecorder) OSType() *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "OSType")
 }
 
-func (_m *MockMachine) Flag() Flag {
+func (_m *MockMachine) Flag() virtualbox.Flag {
 	ret := _m.ctrl.Call(_m, "Flag")
-	ret0, _ := ret[0].(Flag)
+	ret0, _ := ret[0].(virtualbox.Flag)
 	return ret0
 }
 
@@ -314,7 +315,7 @@ func (_mr *_MockMachineRecorder) SetUUID(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "SetUUID", arg0)
 }
 
-func (_m *MockMachine) SetState(_param0 MachineState) {
+func (_m *MockMachine) SetState(_param0 virtualbox.MachineState) {
 	_m.ctrl.Call(_m, "SetState", _param0)
 }
 
@@ -370,7 +371,7 @@ func (_mr *_MockMachineRecorder) SetOSType(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "SetOSType", arg0)
 }
 
-func (_m *MockMachine) SetFlag(_param0 Flag) {
+func (_m *MockMachine) SetFlag(_param0 virtualbox.Flag) {
 	_m.ctrl.Call(_m, "SetFlag", _param0)
 }
 
