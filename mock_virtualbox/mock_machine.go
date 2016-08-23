@@ -3,6 +3,8 @@ package mock_virtualbox
 import (
 	"github.com/markmarine/go-virtualbox"
 	"github.com/satori/go.uuid"
+	"strconv"
+	"fmt"
 )
 
 // Machine information.
@@ -77,6 +79,11 @@ func GetMachine(id string) (*MockMachine, error) {
 
 // ListMachines lists all registered machines.
 func ListMachines() ([]*MockMachine, error) {
+	var ms []*MockMachine
+	for i:=0; i<3; i++ {
+		m, _ := CreateMachine("foo"+strconv.Itoa(i), "/bar")
+		ms = append(ms, m)
+	}
 	return ms, nil
 }
 
@@ -84,10 +91,12 @@ func ListMachines() ([]*MockMachine, error) {
 func CreateMachine(name, basefolder string) (*MockMachine, error) {
 	var m MockMachine
 	if name == "" {
-		m.name == "default"
+		m.name = "default"
+	} else {
+		m.name = name
 	}
 	m.baseFolder = basefolder
-	m.uUID = uuid.NewV4()
+	m.uUID = fmt.Sprintf("%v", uuid.NewV4())
 	m.state = virtualbox.Running
 	m.memory = 512
 	m.vRAM = 12
