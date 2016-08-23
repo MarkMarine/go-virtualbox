@@ -29,29 +29,24 @@ func (m *MockMachineErr) Refresh() error {
 }
 
 func (m *MockMachineErr) Start() error {
-	m.state = virtualbox.Running
 	return mockErr
 }
 
 func (m *MockMachineErr) Save() error {
-	m.state = virtualbox.Saved
 	return mockErr
 }
 
 func (m *MockMachineErr) Pause() error {
-	m.state = virtualbox.Paused
 	return mockErr
 }
 
 // Stop gracefully stops the machine.
 func (m *MockMachineErr) Stop() error {
-	m.state = virtualbox.Poweroff
 	return mockErr
 }
 
 // Poweroff forcefully stops the machine. State is lost and might corrupt the disk image.
 func (m *MockMachineErr) Poweroff() error {
-	m.state = virtualbox.Poweroff
 	return mockErr
 }
 
@@ -67,8 +62,6 @@ func (m *MockMachineErr) Reset() error {
 
 // Delete deletes the machine and associated disk images.
 func (m *MockMachineErr) Delete() error {
-	x := MockMachineErr{}
-	m = &x
 	return mockErr
 }
 
